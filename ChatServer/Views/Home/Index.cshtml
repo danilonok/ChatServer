@@ -6,7 +6,7 @@
 <div class="row">
 	<div class="col-sm-4 bg-light border">
 		<h1 class="h1 text-center">Chats</h1>
-		<ul id="contacts" class="list-group">
+		<ul id="contacts" class="list-group mb-2">
 		</ul>
 		<div class="text-center"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
 
@@ -56,29 +56,29 @@
 
 	<div class="col-sm-8 bg-light border p-0">
 		<div id="hintH" class="card">
-			
-			
+
+
 			<div class="card-body">
-				<h3  class="text-center">Add a new chat or select existing!</h3>
+				<h3 class="text-center">Add a new chat or select existing!</h3>
 			</div>
 		</div>
-		
-		<div id="chat"> 
-		<nav class="navbar navbar-inverse">
-			<div class="container-fluid">
-				<div class="navbar-header">
-					<h3 class="" id="chatheader" class="text-center h3">Send a message</h3>
-				</div>
+
+		<div id="chat">
+			<nav class="navbar navbar-inverse">
+				<div class="container-fluid">
+					<div class="navbar-header">
+						<h3 class="" id="chatheader" class="text-center h3">Send a message</h3>
+					</div>
 
 					<button class="btn btn-outline-primary navbar-btn" id="openEditButton" data-bs-toggle="modal" data-bs-target="#editChatModal"><img class="" src="~/img/settings.svg" style="width: 30px" /></button>
-			</div>
-		</nav>
+				</div>
+			</nav>
 
-		<div id="chatbox" class="bg-light">
+			<div id="chatbox" class="bg-light">
 
 
 
-			<ul class="list-group" style="height: 200px; overflow: auto" id="messageBox"></ul>
+				<ul class="list-group" style="height: 200px; overflow: auto" id="messageBox"></ul>
 				<form onsubmit="return false;">
 
 
@@ -86,25 +86,20 @@
 
 
 
-				<div class="input-group mb-3">
-					<input class="form-control" id="textInput" />
-					<div class="input-group-append">
-						<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
+					<div class="input-group mb-3">
+						<input class="form-control" id="textInput" />
+						<div class="input-group-append">
+							<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
+						</div>
 					</div>
-				</div>
 
 
 
 
 
 
-				<button type="button" class="btn btn-primary dropdown-toggle mb-1" data-bs-toggle="dropdown">
-					Options
-				</button>
-				<ul class="dropdown-menu">
-					<li><a class="dropdown-item" onclick="DeleteConversation()">Delete conversation</a></li>
-				</ul>
-			</form>
+					
+				</form>
 				<!-- Edit chat modal -->
 				<div class="modal" id="editChatModal">
 					<div class="modal-dialog">
@@ -119,13 +114,13 @@
 							<!-- Modal body -->
 							<div class="modal-body">
 								<h5>Name of the chat</h5>
-								
+
 								<label for="chatEditNameInput" class="form-label">Name of the chat:</label>
 								<input class="form-control  mb-1" placeholder="The craziest party ever..." id="chatEditNameInput" name="chatEditNameInput" />
 								<hr class="hr" />
 								<div id="usersSelectedChat" style="margin:0 20% 0 20%" class="bg-white text-center mb-1">
 									<h5>Users</h5>
-									<ul id="userslistSelectedChat" class="list-group" >
+									<ul id="userslistSelectedChat" class="list-group">
 									</ul>
 									<label for="addUserToSelectedChat" class="form-label">Enter E-Mail of a user:</label>
 									<input class="form-control mb-1" id="addUserToSelectedChat" name="addUserToSelectedChat" />
@@ -136,7 +131,7 @@
 									<button type="button" id="clearConversationBtn" onclick="DeleteConversation()" class="btn btn-outline-danger" data-bs-dismiss="modal">Clear conversation</button>
 									<button type="button" id="deleteConversationBtn" class="btn btn-outline-danger" data-bs-dismiss="modal">Delete chat</button>
 								</div>
-								
+
 							</div>
 
 							<!-- Modal footer -->
@@ -149,7 +144,7 @@
 					</div>
 				</div>
 
-		</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -186,13 +181,13 @@
 
 	var chatDiv = document.getElementById("chat");
 	chatDiv.style.display = "none";
-	
 
-	document.getElementById('textInput').onkeydown = function(e){
-	   if(e.keyCode == 13){
-		 SendMessage();
-	   }
-};
+
+	document.getElementById('textInput').onkeydown = function (e) {
+		if (e.keyCode == 13) {
+			SendMessage();
+		}
+	};
 
 
 
@@ -230,7 +225,7 @@
 
 	function AddToList(user) {
 		if (!users.includes(users.find(x => x.Id === user.Id)) && user.Id != loggedUser) {
-
+			console.log("Trying to add");
 
 			users.push(user)
 			var li = document.createElement('li');
@@ -260,7 +255,7 @@
 			dataType: "json",
 			success: function (responce) {
 				var user = JSON.parse(responce);
-				
+				console.log("User exists");
 
 				AddToList(user);
 
@@ -282,7 +277,7 @@
 			dataType: "json",
 			success: function (responce) {
 				var user = JSON.parse(responce);
-				
+
 
 				AddToSelectedChat(user);
 
@@ -324,7 +319,7 @@
 	}
 
 	function AddChat(users, Name) {
-		var id =  uuidv4();
+		var id = uuidv4();
 		console.log("Id - " + id);
 		var model = {
 			Id: id,
@@ -339,11 +334,11 @@
 				data: JSON.stringify(model),
 				contentType: "application/json",
 				success: function () {
-					
-					
+
+
 					//connection.invoke("JoinGroup", id);
-					
-					connection.invoke("SendMessage", id).catch(function (err) {
+
+					connection.invoke("SendToEveryone").catch(function (err) {
 						return console.error(err.toString());
 					});
 					LoadChats()
@@ -375,7 +370,7 @@
 				data: JSON.stringify(model),
 				contentType: "application/json",
 				success: function () {
-					
+
 					connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
 						return console.error(err.toString());
 					});
@@ -387,7 +382,7 @@
 
 			});
 
-		
+
 
 	}
 
@@ -415,7 +410,7 @@
 					data: JSON.stringify(model),
 					contentType: "application/json",
 					success: function () {
-						
+
 						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
 							return console.error(err.toString());
 						});
@@ -447,12 +442,12 @@
 					data: JSON.stringify(model),
 					contentType: "application/json",
 					success: function () {
-						
+
 						connection.invoke("SendMessage", model.ChatID).catch(function (err) {
 							return console.error(err.toString());
 						});
 						selectedChat = null;
-						
+
 						LoadChats()
 
 
@@ -486,7 +481,7 @@
 					data: JSON.stringify(model),
 					contentType: "application/json",
 					success: function () {
-						
+
 						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
 							return console.error(err.toString());
 						});
@@ -512,7 +507,7 @@
 
 		var contactsUl = document.getElementById("contacts");
 		contactsUl.innerHTML = "";
-		
+
 		for (i = 0; i < chats.length; i++) {
 
 			var li = document.createElement("li");
@@ -520,7 +515,7 @@
 			li.classList.add("list-group-item");
 			li.onclick = (function (chat) {
 				return function () {
-					
+
 					selectedChat = chat;
 					selectedChatId = chat.Id;
 
@@ -547,10 +542,10 @@
 				console.log(JSON.parse(data).length);
 				if (selectedChatId != null && JSON.parse(data).find(x => x.Id === selectedChatId)) {
 					selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
-					
+
 					ShowMessages(selectedChat.Messages)
 				}
-				else{
+				else {
 					selectedChat = null;
 					selectedChatId = null;
 					chatDiv.style.display = "none";
@@ -584,7 +579,7 @@
 		hint.style.display = "none";
 		var messageBox = document.getElementById("messageBox");
 		messageBox.innerHTML = "";
-		
+
 		messages.sort(function (b, a) {
 			// Turn your strings into dates, and then subtract them
 			// to get a value that is either negative, positive, or zero.
@@ -592,7 +587,7 @@
 		});
 
 		for (i = 0; i < messages.length; i++) {
-			
+
 
 			if (messages[i].user.Id == loggedUser) {
 				var li = document.createElement('li');

@@ -45,6 +45,10 @@ namespace ChatServer.Hubs
         {
             await Clients.Group(chatID).SendAsync("ReceiveMessage");
         }
+        public async Task SendToEveryone()
+        {
+            await Clients.All.SendAsync("ReceiveMessage");
+        }
 
         public async Task AddToGroup(string chatId)
         {

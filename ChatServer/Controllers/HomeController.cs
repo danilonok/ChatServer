@@ -125,15 +125,22 @@ namespace ChatServer.Controllers
 
                 var SelectedChat = _userContext.Chat.Include(c => c.ChatUsers).FirstOrDefault(x => x.Id == data.ChatId);
                 SelectedChat.ChatUsers.Clear();
-                foreach (var user in data.users)
+                if(data.users.Count != 0)
                 {
-                   SelectedChat.ChatUsers.Add(_userContext.Users.Where(item => item.Id == user.Id).FirstOrDefault());
-                }
-                
+                    foreach (var user in data.users)
+                    {
+                        SelectedChat.ChatUsers.Add(_userContext.Users.Where(item => item.Id == user.Id).FirstOrDefault());
+                    }
 
-                SelectedChat.Title = data.Title;
-                
-                _userContext.SaveChanges();
+
+                    SelectedChat.Title = data.Title;
+
+                    _userContext.SaveChanges();
+                }
+                else
+                {
+                    _userContext.Chat.Remove(SelectedChat);
+                }
 
                 return Json(new { status = "ok" });
             }
