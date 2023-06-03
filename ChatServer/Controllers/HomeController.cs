@@ -26,17 +26,7 @@ namespace ChatServer.Controllers
         [Authorize]
         public IActionResult Index()
         {
-            //var AllMessages = _context.Messages.ToList();
-            //var messages = AllMessages.FindAll(item => item.ReceiverEmail == User.FindFirstValue(ClaimTypes.Email) || item.SenderEmail == User.FindFirstValue(ClaimTypes.Email));
-            //Console.WriteLine(messages.Count);
-            //var chatsEmails = new List<string>();
-            //foreach (var message in messages)
-            //{
-            //    if (!chatsEmails.Contains(message.SenderEmail))
-            //        chatsEmails.Add(message.SenderEmail);
-            //}
-            //ViewData["Messages"] = messages;
-            //ViewData["Chats"] = chatsEmails;
+            
             ViewData["User"] = _userContext.Users.Where( X => X.Email == User.FindFirstValue(ClaimTypes.Email)).First().Id;
             return View();
         }
@@ -79,6 +69,7 @@ namespace ChatServer.Controllers
 
         public class ChatData
         {
+            public string Id { get; set; }
             public List<ApplicationUser> users { get; set; }
             public string Title { get; set; }
         }
@@ -102,7 +93,7 @@ namespace ChatServer.Controllers
                 }
 
                 newChat.Date = DateTime.Now;
-                newChat.Id = Guid.NewGuid().ToString("N");
+                newChat.Id = data.Id;
                 string Names = "";
                 foreach(var user in data.users)
                 {
@@ -119,6 +110,44 @@ namespace ChatServer.Controllers
                 return Json(new { status = e.Message });
             }
         }
+        public class ChatEditData
+        {
+            public string ChatId { get; set; }
+            public List<ApplicationUser> users { get; set; }
+            public string Title { get; set; }
+        }
+        //edit chat
+        [HttpPost]
+        public IActionResult EditChat([FromBody] ChatEditData data)
+        {
+            try
+            {
+
+                var SelectedChat = _userContext.Chat.Include(c => c.ChatUsers).FirstOrDefault(x => x.Id == data.ChatId);
+                SelectedChat.ChatUsers.Clear();
+                foreach (var user in data.users)
+                {
+                   SelectedChat.ChatUsers.Add(_userContext.Users.Where(item => item.Id == user.Id).FirstOrDefault());
+                }
+                
+
+                SelectedChat.Title = data.Title;
+                
+                _userContext.SaveChanges();
+
+                return Json(new { status = "ok" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { status = e.Message });
+            }
+        }
+
+
+
+
+
+
 
         public IActionResult Privacy()
         {
@@ -194,6 +223,28 @@ namespace ChatServer.Controllers
 
             return Ok();
         }
+
+        [HttpPost]
+        public IActionResult DeleteChat([FromBody] ChatRec chatID)
+        {
+            try
+            {
+                _userContext.Chat.Remove(_userContext.Chat.Where(item => item.Id == chatID.ChatID).FirstOrDefault());
+
+                _userContext.SaveChanges();
+
+                return Json(new { status = "ok" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { status = e.Message });
+            }
+
+
+            return Ok();
+        }
+
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

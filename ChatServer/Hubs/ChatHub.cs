@@ -34,6 +34,7 @@ namespace ChatServer.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
         }
+       
         
 
 

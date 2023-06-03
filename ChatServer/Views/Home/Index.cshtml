@@ -14,7 +14,7 @@
 
 
 
-	<!-- The Modal -->
+	<!-- Add chat modal -->
 	<div class="modal" id="myModal">
 		<div class="modal-dialog">
 			<div class="modal-content">
@@ -70,7 +70,7 @@
 					<h3 class="" id="chatheader" class="text-center h3">Send a message</h3>
 				</div>
 
-				<button class="btn btn-outline-primary navbar-btn"><img class="" src="~/img/settings.svg" style="width: 30px" /></button>
+					<button class="btn btn-outline-primary navbar-btn" id="openEditButton" data-bs-toggle="modal" data-bs-target="#editChatModal"><img class="" src="~/img/settings.svg" style="width: 30px" /></button>
 			</div>
 		</nav>
 
@@ -105,6 +105,49 @@
 					<li><a class="dropdown-item" onclick="DeleteConversation()">Delete conversation</a></li>
 				</ul>
 			</form>
+				<!-- Edit chat modal -->
+				<div class="modal" id="editChatModal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+
+							<!-- Modal Header -->
+							<div class="modal-header">
+								<h4 class="modal-title">Edit chat</h4>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+							</div>
+
+							<!-- Modal body -->
+							<div class="modal-body">
+								<h5>Name of the chat</h5>
+								
+								<label for="chatEditNameInput" class="form-label">Name of the chat:</label>
+								<input class="form-control  mb-1" placeholder="The craziest party ever..." id="chatEditNameInput" name="chatEditNameInput" />
+								<hr class="hr" />
+								<div id="usersSelectedChat" style="margin:0 20% 0 20%" class="bg-white text-center mb-1">
+									<h5>Users</h5>
+									<ul id="userslistSelectedChat" class="list-group" >
+									</ul>
+									<label for="addUserToSelectedChat" class="form-label">Enter E-Mail of a user:</label>
+									<input class="form-control mb-1" id="addUserToSelectedChat" name="addUserToSelectedChat" />
+									<div class="text-center mb-1"><button class="btn btn-outline-primary" id="addUserToSelectedChatBtn">Add user</button></div>
+								</div>
+								<hr class="hr" />
+								<div class="text-center">
+									<button type="button" id="clearConversationBtn" onclick="DeleteConversation()" class="btn btn-outline-danger" data-bs-dismiss="modal">Clear conversation</button>
+									<button type="button" id="deleteConversationBtn" class="btn btn-outline-danger" data-bs-dismiss="modal">Delete chat</button>
+								</div>
+								
+							</div>
+
+							<!-- Modal footer -->
+							<div class="modal-footer">
+								<button type="button" id="saveChangesBtn" class="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+								<button type="button" id="cancelChanges" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+							</div>
+
+						</div>
+					</div>
+				</div>
 
 		</div>
 		</div>
@@ -131,7 +174,7 @@
 		console.log("New Message!");
 		LoadChats();
 	});
-
+	chatCount = 0;
 	var mbox = document.getElementById("messageBox");
 	mbox.style.display = "none";
 	var selectedChat = null;
@@ -217,7 +260,7 @@
 			dataType: "json",
 			success: function (responce) {
 				var user = JSON.parse(responce);
-				console.log("Success, user is " + user.FirstName + " " + user.LastName);
+				
 
 				AddToList(user);
 
@@ -229,6 +272,27 @@
 		});
 	}
 
+
+	function GetUserSelectedChat(userEmail) {
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetUser")',
+			contentType: "application/json",
+			data: { email: userEmail },
+			dataType: "json",
+			success: function (responce) {
+				var user = JSON.parse(responce);
+				
+
+				AddToSelectedChat(user);
+
+			},
+			error: function () {
+				console.log("Error getting user")
+			}
+
+		});
+	}
 
 
 
@@ -260,8 +324,10 @@
 	}
 
 	function AddChat(users, Name) {
-
+		var id =  uuidv4();
+		console.log("Id - " + id);
 		var model = {
+			Id: id,
 			users: users,
 			Title: Name,
 		};
@@ -273,7 +339,14 @@
 				data: JSON.stringify(model),
 				contentType: "application/json",
 				success: function () {
-					console.log(JSON.stringify(model));
+					
+					
+					//connection.invoke("JoinGroup", id);
+					
+					connection.invoke("SendMessage", id).catch(function (err) {
+						return console.error(err.toString());
+					});
+					LoadChats()
 
 				},
 				error: function () {
@@ -287,7 +360,36 @@
 	}
 
 
+	function EditChat(users, Name) {
 
+		var model = {
+			ChatId: selectedChat.Id,
+			users: users,
+			Title: Name,
+		};
+
+		$.ajax(
+			{
+				type: "POST", //HTTP POST Method
+				url: '@Url.Action("EditChat")', // Controller/View
+				data: JSON.stringify(model),
+				contentType: "application/json",
+				success: function () {
+					
+					connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+						return console.error(err.toString());
+					});
+					LoadChats()
+				},
+				error: function () {
+					alert("An error occurred while posting the data");
+				}
+
+			});
+
+		
+
+	}
 
 
 
@@ -313,8 +415,11 @@
 					data: JSON.stringify(model),
 					contentType: "application/json",
 					success: function () {
-						console.log(JSON.stringify(model));
-
+						
+						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+							return console.error(err.toString());
+						});
+						LoadChats()
 
 
 					},
@@ -327,6 +432,44 @@
 
 
 	}
+
+	//delete whole chat
+	function DeleteChat() {
+		if (selectedChat != null) {
+
+			var model = {
+				ChatID: selectedChat.Id,
+			};
+			$.ajax(
+				{
+					type: "POST", //HTTP POST Method
+					url: '@Url.Action("DeleteChat")', // Controller/View
+					data: JSON.stringify(model),
+					contentType: "application/json",
+					success: function () {
+						
+						connection.invoke("SendMessage", model.ChatID).catch(function (err) {
+							return console.error(err.toString());
+						});
+						selectedChat = null;
+						
+						LoadChats()
+
+
+					},
+					error: function () {
+						alert("An error occurred while posting the data");
+					}
+
+				});
+		}
+
+
+	}
+
+
+
+
 
 	function SendMessage() {
 		if (selectedChat != null && document.getElementById("textInput").value != "") {
@@ -343,7 +486,7 @@
 					data: JSON.stringify(model),
 					contentType: "application/json",
 					success: function () {
-						console.log(JSON.stringify(model));
+						
 						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
 							return console.error(err.toString());
 						});
@@ -369,7 +512,7 @@
 
 		var contactsUl = document.getElementById("contacts");
 		contactsUl.innerHTML = "";
-		console.log(chats.length);
+		
 		for (i = 0; i < chats.length; i++) {
 
 			var li = document.createElement("li");
@@ -377,7 +520,7 @@
 			li.classList.add("list-group-item");
 			li.onclick = (function (chat) {
 				return function () {
-					console.log(chat);
+					
 					selectedChat = chat;
 					selectedChatId = chat.Id;
 
@@ -400,18 +543,27 @@
 			contentType: "application/json",
 			dataType: "json",
 			success: function (data) {
-				console.log("Success?");
-				console.log(JSON.parse(data));
-				if (selectedChatId != null) {
+				console.log("Updating Chats");
+				console.log(JSON.parse(data).length);
+				if (selectedChatId != null && JSON.parse(data).find(x => x.Id === selectedChatId)) {
 					selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
-					console.log("It is " + selectedChat)
+					
 					ShowMessages(selectedChat.Messages)
 				}
-				if (initConnection) {
+				else{
+					selectedChat = null;
+					selectedChatId = null;
+					chatDiv.style.display = "none";
+					var hint = document.getElementById("hintH");
+					hint.style.display = "block";
+				}
+				if (JSON.parse(data).length != chatCount) {
+					console.log("im here");
 					JSON.parse(data).forEach(group => {
 						connection.invoke("JoinGroup", group.Id);
 					});
 					initConnection = false;
+					chatCount = JSON.parse(data).length;
 				}
 
 
@@ -432,7 +584,7 @@
 		hint.style.display = "none";
 		var messageBox = document.getElementById("messageBox");
 		messageBox.innerHTML = "";
-		console.log(messages);
+		
 		messages.sort(function (b, a) {
 			// Turn your strings into dates, and then subtract them
 			// to get a value that is either negative, positive, or zero.
@@ -440,7 +592,7 @@
 		});
 
 		for (i = 0; i < messages.length; i++) {
-			console.log(messages[i]);
+			
 
 			if (messages[i].user.Id == loggedUser) {
 				var li = document.createElement('li');
@@ -471,6 +623,7 @@
 
 
 </script>
-
+<script src="~/js/EditChat.js"></script>
+<script src="~/js/site.js"></script>
 
 
