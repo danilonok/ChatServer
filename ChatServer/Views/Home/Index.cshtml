@@ -89,7 +89,7 @@
 
 
 					<div class="input-group mb-3">
-						<textarea class="form-control" id="textInput"></textarea>
+						<textarea autofocus placeholder="Type your message..." class="form-control" id="textInput"></textarea>
 
 						<div class="input-group-append">
 							<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
@@ -155,485 +155,378 @@
 
 
 @section scripts {
-	
 
 
 
-<script>
 
+	<script>
 
-	var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
-	connection.start().then(function () {
-		console.log("Connection established succesfully");
-	}).catch(function (err) {
-		alert("Pizdec");
-		return console.error(err.toString());
-	});
-
-	connection.on("ReceiveMessage", function () {
-		console.log("New Message!");
-		LoadChats();
-	});
-	chatCount = 0;
-	var mbox = document.getElementById("messageBox");
-	mbox.style.display = "none";
-	var selectedChat = null;
-	var selectedChatId = null;
-
-
-	var initConnection = true;
-
-
-	var chatDiv = document.getElementById("chat");
-	chatDiv.style.display = "none";
-
-
-	document.getElementById('textInput').onkeydown = function (e) {
-		if (e.keyCode == 13) {
-			SendMessage();
-		}
-	};
-
-
-
-	var chatbox = document.getElementById("chatbox");
-	chatbox.style.display = "block";
-
-	var loggedUser = '@user';
-
-	var userslist = document.getElementById("userslist");
-	var addUserButton = document.getElementById("addUserButton");
-	var emailInput = document.getElementById("receiverInput");
-	var users = new Array();
-	var nameInput = document.getElementById("chatNameInput")
-	var addChatBtn = document.getElementById("addChatBtn");
-	var usersDiv = document.getElementById("usersDiv");
-	usersDiv.style.display = "none";
-	window.onload = function () {
-		LoadChats();
-	}
-
-	addUserButton.onclick = function () {
-		if (receiverInput.value != "") {
-			//get user
-			GetUser(emailInput.value)
-			usersDiv.style.display = "block";
-		}
-	}
-	addChatBtn.onclick = function () {
-		if (users.length != 0) {
-			AddChat(users, nameInput.value);
-			users = [];
-			userslist.innerHTML = "";
-		}
-	}
-
-	function AddToList(user) {
-		if (!users.includes(users.find(x => x.Id === user.Id)) && user.Id != loggedUser) {
-			console.log("Trying to add");
-
-			users.push(user)
-			var li = document.createElement('li');
-			li.setAttribute('class', 'list-group-item');
-			userslist.appendChild(li);
-			var btn = document.createElement('button');
-			btn.setAttribute('class', 'btn btn-sm btn-danger  ')
-			btn.innerHTML = "Delete";
-			btn.style = "margin-left:10px;"
-			btn.onclick = function () {
-				users.splice(users.indexOf(user), 1);
-				li.remove();
-			}
-			li.innerHTML = li.innerHTML + user.FirstName + " " + user.LastName;
-			li.appendChild(btn);
-
-			//userslist.innerHTML += "<li class = \"list-group-item\">" + user.FirstName + " " + user.LastName + "<button class=\"btn btn-primary badge bg-danger\">Delete</button>" + "</li>";
-		}
-	}
-
-	function GetUser(userEmail) {
-		$.ajax({
-			type: "GET",
-			url: '@Url.Action("GetUser")',
-			contentType: "application/json",
-			data: { email: userEmail },
-			dataType: "json",
-			success: function (responce) {
-				var user = JSON.parse(responce);
-				console.log("User exists");
-
-				AddToList(user);
-
-			},
-			error: function () {
-				console.log("Error getting user")
-			}
-
+		// Establish connection with SignalR Hub
+		var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+		connection.start().then(function () {
+			console.log("Connection established succesfully");
+		}).catch(function (err) {
+			alert("Pizdec");
+			return console.error(err.toString());
 		});
-	}
-
-
-	function GetUserSelectedChat(userEmail) {
-		$.ajax({
-			type: "GET",
-			url: '@Url.Action("GetUser")',
-			contentType: "application/json",
-			data: { email: userEmail },
-			dataType: "json",
-			success: function (responce) {
-				var user = JSON.parse(responce);
-
-
-				AddToSelectedChat(user);
-
-			},
-			error: function () {
-				console.log("Error getting user")
-			}
-
+		// Start polling for a signals
+		connection.on("ReceiveMessage", function () {
+			console.log("New Message!");
+			LoadChats();
 		});
-	}
+
+		chatCount = 0;
+		var mbox = document.getElementById("messageBox");
+		mbox.style.display = "none";
+
+		var selectedChat = null;
+		var selectedChatId = null;
+		var loggedUser = '@user';
+
+		var initConnection = true;
 
 
+		var chatDiv = document.getElementById("chat");
+		chatDiv.style.display = "none";
+
+		// Restrict updating form by typing enter
+		document.getElementById('textInput').onkeydown = function (e) {
+			if (e.keyCode == 13) {
+				SendMessage();
+			}
+		};
 
 
-
-
-
-
-
-
-
-
-
-
-	function ShowChat(name) {
+		var chatbox = document.getElementById("chatbox");
 		chatbox.style.display = "block";
 
-		var chatheader = document.getElementById("chatheader");
-		if (name != null) {
-			mbox.style.display = "block";
-			chatheader.innerHTML = name;
-		}
-		else {
-			chatheader.innerHTML = 'Select a contact or start a new conversation!';
+
+
+		// First load
+		window.onload = function () {
+			LoadChats();
 		}
 
-
-
-	}
-
-	function AddChat(users, Name) {
-		var id = uuidv4();
-		console.log("Id - " + id);
-		var model = {
-			Id: id,
-			users: users,
-			Title: Name,
-		};
-
-		$.ajax(
-			{
-				type: "POST", //HTTP POST Method
-				url: '@Url.Action("AddChat")', // Controller/View
-				data: JSON.stringify(model),
+		// Get user info from database
+		function GetUser(userEmail) {
+			$.ajax({
+				type: "GET",
+				url: '@Url.Action("GetUser")',
 				contentType: "application/json",
-				success: function () {
+				data: { email: userEmail },
+				dataType: "json",
+				success: function (responce) {
+					var user = JSON.parse(responce);
+					console.log("User exists");
 
-
-					//connection.invoke("JoinGroup", id);
-
-					connection.invoke("SendToEveryone").catch(function (err) {
-						return console.error(err.toString());
-					});
-					LoadChats()
+					AddToList(user);
 
 				},
 				error: function () {
-					alert("An error occurred while posting the data");
+					console.log("Error getting user")
 				}
 
 			});
+		}
 
-		//ShowMessages(selectedChat.Messages);
-
-	}
-
-
-	function EditChat(users, Name) {
-
-		var model = {
-			ChatId: selectedChat.Id,
-			users: users,
-			Title: Name,
-		};
-
-		$.ajax(
-			{
-				type: "POST", //HTTP POST Method
-				url: '@Url.Action("EditChat")', // Controller/View
-				data: JSON.stringify(model),
+		
+		function GetUserSelectedChat(userEmail) {
+			$.ajax({
+				type: "GET",
+				url: '@Url.Action("GetUser")',
 				contentType: "application/json",
-				success: function () {
+				data: { email: userEmail },
+				dataType: "json",
+				success: function (responce) {
+					var user = JSON.parse(responce);
 
-					connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
-						return console.error(err.toString());
-					});
-					LoadChats()
+
+					AddToSelectedChat(user);
+
 				},
 				error: function () {
-					alert("An error occurred while posting the data");
+					console.log("Error getting user")
 				}
 
 			});
-
-
-
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-	function DeleteConversation() {
-		if (selectedChat != null) {
-
-			var model = {
-				ChatID: selectedChat.Id,
-			};
-			$.ajax(
-				{
-					type: "POST", //HTTP POST Method
-					url: '@Url.Action("DeleteConversation")', // Controller/View
-					data: JSON.stringify(model),
-					contentType: "application/json",
-					success: function () {
-
-						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
-							return console.error(err.toString());
-						});
-						LoadChats()
-
-
-					},
-					error: function () {
-						alert("An error occurred while posting the data");
-					}
-
-				});
 		}
 
+		// Add a header
+		function ShowChat(name) {
+			chatbox.style.display = "block";
 
-	}
-
-	//delete whole chat
-	function DeleteChat() {
-		if (selectedChat != null) {
-
-			var model = {
-				ChatID: selectedChat.Id,
-			};
-			$.ajax(
-				{
-					type: "POST", //HTTP POST Method
-					url: '@Url.Action("DeleteChat")', // Controller/View
-					data: JSON.stringify(model),
-					contentType: "application/json",
-					success: function () {
-
-						connection.invoke("SendMessage", model.ChatID).catch(function (err) {
-							return console.error(err.toString());
-						});
-						selectedChat = null;
-
-						LoadChats()
-
-
-					},
-					error: function () {
-						alert("An error occurred while posting the data");
-					}
-
-				});
-		}
-
-
-	}
-
-
-
-
-
-	function SendMessage() {
-		if (selectedChat != null && document.getElementById("textInput").value != "") {
-			document.getElementById("textInput").style.height = "30px";
-			var model = {
-
-				Content: document.getElementById("textInput").value,
-				ChatId: selectedChat.Id
-			};
-
-			$.ajax(
-				{
-					type: "POST", //HTTP POST Method
-					url: '@Url.Action("SendMessage")', // Controller/View
-					data: JSON.stringify(model),
-					contentType: "application/json",
-					success: function () {
-
-						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
-							return console.error(err.toString());
-						});
-						LoadChats()
-					},
-					error: function () {
-						alert("An error occurred while posting the data");
-					}
-
-				});
-			document.getElementById("textInput").value = "";
-			//$("messageBox").last()[0].scrollIntoView({ behavior: 'smooth' });
-
-		}
-
-
-	}
-
-
-
-
-	function ShowChats(chats) {
-
-		var contactsUl = document.getElementById("contacts");
-		contactsUl.innerHTML = "";
-
-		for (i = 0; i < chats.length; i++) {
-
-			var li = document.createElement("li");
-			li.appendChild(document.createTextNode(chats[i].Title));
-			li.classList.add("list-group-item");
-			li.onclick = (function (chat) {
-				return function () {
-
-					selectedChat = chat;
-					selectedChatId = chat.Id;
-
-
-					ShowMessages(chat.Messages);
-				};
-			})(chats[i]);
-			contactsUl.appendChild(li);
-		}
-
-
-	}
-
-
-
-	function LoadChats() {
-		$.ajax({
-			type: "GET",
-			url: '@Url.Action("GetChats")',
-			contentType: "application/json",
-			dataType: "json",
-			success: function (data) {
-				console.log("Updating Chats");
-				console.log(JSON.parse(data).length);
-				if (selectedChatId != null && JSON.parse(data).find(x => x.Id === selectedChatId)) {
-					selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
-
-					ShowMessages(selectedChat.Messages)
-				}
-				else {
-					selectedChat = null;
-					selectedChatId = null;
-					chatDiv.style.display = "none";
-					var hint = document.getElementById("hintH");
-					hint.style.display = "block";
-				}
-				if (JSON.parse(data).length != chatCount) {
-					console.log("im here");
-					JSON.parse(data).forEach(group => {
-						connection.invoke("JoinGroup", group.Id);
-					});
-					initConnection = false;
-					chatCount = JSON.parse(data).length;
-				}
-
-
-				ShowChats(JSON.parse(data));
-			},
-			error: function () {
-				console.log("Error getting chats")
-			}
-
-		});
-	}
-
-
-
-	function ShowMessages(messages) {
-		chatDiv.style.display = "block";
-		var hint = document.getElementById("hintH");
-		hint.style.display = "none";
-		var messageBox = document.getElementById("messageBox");
-		messageBox.innerHTML = "";
-
-		messages.sort(function (b, a) {
-			// Turn your strings into dates, and then subtract them
-			// to get a value that is either negative, positive, or zero.
-			return new Date(b.Date) - new Date(a.Date);
-		});
-
-		for (i = 0; i < messages.length; i++) {
-			var date = new Date(Date.parse(messages[i].Date))
-			var dateStr = date.getDay().toString() + ". " + date.getMonth().toString() + ". " + date.getFullYear().toString() + " | " + date.getHours().toString() + ":" + date.getMinutes().toString();
-
-			if (messages[i].user.Id == loggedUser) {
-				var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${messages[i].Content}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
-
-				messageBox.innerHTML = messageBox.innerHTML + htmlText;
-
-				//var li = document.createElement('li');
-				//li.setAttribute('class', 'list-group-item overflow-visible');
-
-				//messageBox.appendChild(li);
-
-				//li.style = "margin: 0 10px 0 10px;";
-				//li.innerHTML = li.innerHTML + "You" + ": " + messages[i].Content
-
+			var chatheader = document.getElementById("chatheader");
+			if (name != null) {
+				mbox.style.display = "block";
+				chatheader.innerHTML = name;
 			}
 			else {
-				var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${messages[i].Content}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
-
-				messageBox.innerHTML = messageBox.innerHTML + htmlText;
-				//var li = document.createElement('li');
-				//li.setAttribute('class', 'list-group-item overflow-visible');
-				//messageBox.appendChild(li);
-
-				//li.style = "margin: 0 10px 0 10px;";
-				//li.innerHTML = li.innerHTML + messages[i].user.FirstName + ": " + messages[i].Content
-
+				chatheader.innerHTML = 'Select a contact or start a new conversation!';
 			}
 
 
 
 		}
-		messageBox.scrollTop = messageBox.scrollHeight - messageBox.clientHeight;
-		ShowChat(selectedChat.Title);
-	}
+		// AJAX Query to add new chat
+		function AddChat(users, Name) {
+			var id = uuidv4();
+			console.log("Id - " + id);
+			var model = {
+				Id: id,
+				users: users,
+				Title: Name,
+			};
+
+			$.ajax(
+				{
+					type: "POST",
+					url: '@Url.Action("AddChat")',
+					data: JSON.stringify(model),
+					contentType: "application/json",
+					success: function () {
+						connection.invoke("SendToEveryone").catch(function (err) {
+							return console.error(err.toString());
+						});
+						LoadChats()
+
+					},
+					error: function () {
+						alert("An error occurred while posting the data");
+					}
+				});
+
+
+		}
+
+		// AJAX Query to edit a chat
+		function EditChat(users, Name) {
+
+			var model = {
+				ChatId: selectedChat.Id,
+				users: users,
+				Title: Name,
+			};
+
+			$.ajax(
+				{
+					type: "POST", //HTTP POST Method
+					url: '@Url.Action("EditChat")', // Controller/View
+					data: JSON.stringify(model),
+					contentType: "application/json",
+					success: function () {
+						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+							return console.error(err.toString());
+						});
+						LoadChats()
+					},
+					error: function () {
+						alert("An error occurred while posting the data");
+					}
+
+				});
+		}
+
+		// AJAX Query to clear a chat
+		function DeleteConversation() {
+			if (selectedChat != null) {
+
+				var model = {
+					ChatID: selectedChat.Id,
+				};
+				$.ajax(
+					{
+						type: "POST", //HTTP POST Method
+						url: '@Url.Action("DeleteConversation")', // Controller/View
+						data: JSON.stringify(model),
+						contentType: "application/json",
+						success: function () {
+							connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+								return console.error(err.toString());
+							});
+							LoadChats()
+						},
+						error: function () {
+							alert("An error occurred while posting the data");
+						}
+
+					});
+			}
+
+
+		}
+
+		 //AJAX Query to delete a chat
+		function DeleteChat() {
+			if (selectedChat != null) {
+
+				var model = {
+					ChatID: selectedChat.Id,
+				};
+				$.ajax(
+					{
+						type: "POST", //HTTP POST Method
+						url: '@Url.Action("DeleteChat")', // Controller/View
+						data: JSON.stringify(model),
+						contentType: "application/json",
+						success: function () {
+							connection.invoke("SendMessage", model.ChatID).catch(function (err) {
+								return console.error(err.toString());
+							});
+							selectedChat = null;
+							LoadChats()
+						},
+						error: function () {
+							alert("An error occurred while posting the data");
+						}
+
+					});
+			}
+
+		}
 
 
 
-</script>
-<script src="~/js/EditChat.js"></script>
-<script src="~/js/site.js"></script>
+
+		//AJAX Query to send a message to the selected chat
+		function SendMessage() {
+			if (selectedChat != null && document.getElementById("textInput").value != "") {
+				document.getElementById("textInput").style.height = "30px";
+				var model = {
+					Content: document.getElementById("textInput").value,
+					ChatId: selectedChat.Id
+				};
+				$.ajax(
+					{
+						type: "POST",
+						url: '@Url.Action("SendMessage")',
+						data: JSON.stringify(model),
+						contentType: "application/json",
+						success: function () {
+							connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+								return console.error(err.toString());
+							});
+							LoadChats()
+						},
+						error: function () {
+							alert("An error occurred while posting the data");
+						}
+
+					});
+				document.getElementById("textInput").value = "";
+			}
+
+		}
+
+
+
+		// Add chat UI elements from the query
+		function ShowChats(chats) {
+
+			var contactsUl = document.getElementById("contacts");
+			contactsUl.innerHTML = "";
+
+			for (i = 0; i < chats.length; i++) {
+
+				var li = document.createElement("li");
+				li.appendChild(document.createTextNode(chats[i].Title));
+				li.classList.add("list-group-item");
+				li.onclick = (function (chat) {
+					return function () {
+						selectedChat = chat;
+						selectedChatId = chat.Id;
+						ShowMessages(chat.Messages);
+					};
+				})(chats[i]);
+				contactsUl.appendChild(li);
+			}
+
+
+		}
+		// AJAX Query to get chats from database
+		function LoadChats() {
+			$.ajax({
+				type: "GET",
+				url: '@Url.Action("GetChats")',
+				contentType: "application/json",
+				dataType: "json",
+				success: function (data) {
+					console.log("Updating Chats");
+					console.log(JSON.parse(data).length);
+					if (selectedChatId != null && JSON.parse(data).find(x => x.Id === selectedChatId)) {
+						selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
+
+						ShowMessages(selectedChat.Messages)
+					}
+					else {
+						selectedChat = null;
+						selectedChatId = null;
+						chatDiv.style.display = "none";
+						var hint = document.getElementById("hintH");
+						hint.style.display = "block";
+					}
+					if (JSON.parse(data).length != chatCount) {
+						console.log("im here");
+						JSON.parse(data).forEach(group => {
+							connection.invoke("JoinGroup", group.Id);
+						});
+						initConnection = false;
+						chatCount = JSON.parse(data).length;
+					}
+
+
+					ShowChats(JSON.parse(data));
+				},
+				error: function () {
+					console.log("Error getting chats")
+				}
+
+			});
+		}
+
+
+		// Add messages UI elements to the document
+		function ShowMessages(messages) {
+			chatDiv.style.display = "block";
+			var hint = document.getElementById("hintH");
+			hint.style.display = "none";
+			var messageBox = document.getElementById("messageBox");
+			messageBox.innerHTML = "";
+
+			messages.sort(function (b, a) {
+				return new Date(b.Date) - new Date(a.Date);
+			});
+
+			for (i = 0; i < messages.length; i++) {
+
+				var date = new Date(Date.parse(messages[i].Date))
+				var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+				var message = messages[i].Content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+				var dateStr = date.getDay().toString() + ". " + date.getMonth().toString() + ". " + date.getFullYear().toString() + " | " + date.getHours().toString() + ":" + date.getMinutes().toString();
+				dateStr = date.toLocaleDateString("en-US", options) + " | " + ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2);;
+				if (messages[i].user.Id == loggedUser) {
+					var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1 text-white rounded-3 bg-primary" style="margin:0 25px 0 25px">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
+					
+					messageBox.innerHTML = messageBox.innerHTML + htmlText;
+
+				}
+				else {
+					var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
+					messageBox.innerHTML = messageBox.innerHTML + htmlText;
+
+				}
+
+
+
+			}
+			messageBox.scrollTop = messageBox.scrollHeight - messageBox.clientHeight;
+			ShowChat(selectedChat.Title);
+		}
+
+
+
+	</script>
+	<script src="~/js/EditChat.js"></script>
+	<script src="~/js/site.js"></script>
+	<script src="~/js/AddChat.js"></script>
 }
 

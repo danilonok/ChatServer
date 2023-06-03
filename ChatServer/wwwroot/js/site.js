@@ -13,6 +13,7 @@ function uuidv4() {
 }
 
 $(document).ready(function () {
+    
     $("textarea").each(function () {
         this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden;");
     }).on("input", function () {
@@ -26,4 +27,5 @@ $(document).ready(function () {
             e.preventDefault();
         }
     });
+
 });
