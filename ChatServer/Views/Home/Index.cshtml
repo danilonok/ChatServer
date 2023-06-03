@@ -1,0 +1,476 @@
+﻿@{
+
+	var user = ViewData["User"];
+}
+<script src="https://unpkg.com/@@aspnet/signalr@@1.0.0-rc1-final/dist/browser/signalr.js"></script>
+<div class="row">
+	<div class="col-sm-4 bg-light border">
+		<h1 class="h1 text-center">Chats</h1>
+		<ul id="contacts" class="list-group">
+		</ul>
+		<div class="text-center"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
+
+	</div>
+
+
+
+	<!-- The Modal -->
+	<div class="modal" id="myModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">Create chat</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<label for="receiverInput" class="form-label">Enter E-Mail of a user:</label>
+					<input class="form-control form-control-lg mb-2" id="receiverInput" name="receiverEmail" />
+					<div class="text-center mb-2"><button class="btn btn-primary" id="addUserButton">Add user</button></div>
+					<div id="usersDiv" class="bg-light text-center mb-1">
+						<h5>Users</h5>
+						<ul id="userslist" class="list-group" style="margin:0 20% 0 20%">
+						</ul>
+					</div>
+					<label for="chatNameInput" class="form-label">Name of the chat:</label>
+					<input class="form-control" placeholder="The craziest party ever..." form-control-lg mb-2" id="chatNameInput" name="chatNameInput" />
+				</div>
+
+				<!-- Modal footer -->
+				<div class="modal-footer">
+					<button type="button" id="addChatBtn" class="btn btn-primary" data-bs-dismiss="modal">Create chat</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+
+
+
+
+
+
+	<div class="col-sm-8 bg-light border p-0">
+		<div id="hintH" class="card">
+			
+			
+			<div class="card-body">
+				<h3  class="text-center">Add a new chat or select existing!</h3>
+			</div>
+		</div>
+		
+		<div id="chat"> 
+		<nav class="navbar navbar-inverse">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<h3 class="" id="chatheader" class="text-center h3">Send a message</h3>
+				</div>
+
+				<button class="btn btn-outline-primary navbar-btn"><img class="" src="~/img/settings.svg" style="width: 30px" /></button>
+			</div>
+		</nav>
+
+		<div id="chatbox" class="bg-light">
+
+
+
+			<ul class="list-group" style="height: 200px; overflow: auto" id="messageBox"></ul>
+				<form onsubmit="return false;">
+
+
+
+
+
+
+				<div class="input-group mb-3">
+					<input class="form-control" id="textInput" />
+					<div class="input-group-append">
+						<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
+					</div>
+				</div>
+
+
+
+
+
+
+				<button type="button" class="btn btn-primary dropdown-toggle mb-1" data-bs-toggle="dropdown">
+					Options
+				</button>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" onclick="DeleteConversation()">Delete conversation</a></li>
+				</ul>
+			</form>
+
+		</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+
+<script>
+
+
+	var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+	connection.start().then(function () {
+		console.log("Connection established succesfully");
+	}).catch(function (err) {
+		alert("Pizdec");
+		return console.error(err.toString());
+	});
+
+	connection.on("ReceiveMessage", function () {
+		console.log("New Message!");
+		LoadChats();
+	});
+
+	var mbox = document.getElementById("messageBox");
+	mbox.style.display = "none";
+	var selectedChat = null;
+	var selectedChatId = null;
+
+
+	var initConnection = true;
+
+
+	var chatDiv = document.getElementById("chat");
+	chatDiv.style.display = "none";
+	
+
+	document.getElementById('textInput').onkeydown = function(e){
+	   if(e.keyCode == 13){
+		 SendMessage();
+	   }
+};
+
+
+
+	var chatbox = document.getElementById("chatbox");
+	chatbox.style.display = "block";
+	chatbox.onclick = function () { LoadChats() }
+	var loggedUser = '@user';
+
+	var userslist = document.getElementById("userslist");
+	var addUserButton = document.getElementById("addUserButton");
+	var emailInput = document.getElementById("receiverInput");
+	var users = new Array();
+	var nameInput = document.getElementById("chatNameInput")
+	var addChatBtn = document.getElementById("addChatBtn");
+	var usersDiv = document.getElementById("usersDiv");
+	usersDiv.style.display = "none";
+	window.onload = function () {
+		LoadChats();
+	}
+
+	addUserButton.onclick = function () {
+		if (receiverInput.value != "") {
+			//get user
+			GetUser(emailInput.value)
+			usersDiv.style.display = "block";
+		}
+	}
+	addChatBtn.onclick = function () {
+		if (users.length != 0) {
+			AddChat(users, nameInput.value);
+			users = [];
+			userslist.innerHTML = "";
+		}
+	}
+
+	function AddToList(user) {
+		if (!users.includes(users.find(x => x.Id === user.Id)) && user.Id != loggedUser) {
+
+
+			users.push(user)
+			var li = document.createElement('li');
+			li.setAttribute('class', 'list-group-item');
+			userslist.appendChild(li);
+			var btn = document.createElement('button');
+			btn.setAttribute('class', 'btn btn-sm btn-danger  ')
+			btn.innerHTML = "Delete";
+			btn.style = "margin-left:10px;"
+			btn.onclick = function () {
+				users.splice(users.indexOf(user), 1);
+				li.remove();
+			}
+			li.innerHTML = li.innerHTML + user.FirstName + " " + user.LastName;
+			li.appendChild(btn);
+
+			//userslist.innerHTML += "<li class = \"list-group-item\">" + user.FirstName + " " + user.LastName + "<button class=\"btn btn-primary badge bg-danger\">Delete</button>" + "</li>";
+		}
+	}
+
+	function GetUser(userEmail) {
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetUser")',
+			contentType: "application/json",
+			data: { email: userEmail },
+			dataType: "json",
+			success: function (responce) {
+				var user = JSON.parse(responce);
+				console.log("Success, user is " + user.FirstName + " " + user.LastName);
+
+				AddToList(user);
+
+			},
+			error: function () {
+				console.log("Error getting user")
+			}
+
+		});
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	function ShowChat(name) {
+		chatbox.style.display = "block";
+
+		var chatheader = document.getElementById("chatheader");
+		if (name != null) {
+			mbox.style.display = "block";
+			chatheader.innerHTML = name;
+		}
+		else {
+			chatheader.innerHTML = 'Select a contact or start a new conversation!';
+		}
+
+
+
+	}
+
+	function AddChat(users, Name) {
+
+		var model = {
+			users: users,
+			Title: Name,
+		};
+
+		$.ajax(
+			{
+				type: "POST", //HTTP POST Method
+				url: '@Url.Action("AddChat")', // Controller/View
+				data: JSON.stringify(model),
+				contentType: "application/json",
+				success: function () {
+					console.log(JSON.stringify(model));
+
+				},
+				error: function () {
+					alert("An error occurred while posting the data");
+				}
+
+			});
+
+		//ShowMessages(selectedChat.Messages);
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	function DeleteConversation() {
+		if (selectedChat != null) {
+
+			var model = {
+				ChatID: selectedChat.Id,
+			};
+			$.ajax(
+				{
+					type: "POST", //HTTP POST Method
+					url: '@Url.Action("DeleteConversation")', // Controller/View
+					data: JSON.stringify(model),
+					contentType: "application/json",
+					success: function () {
+						console.log(JSON.stringify(model));
+
+
+
+					},
+					error: function () {
+						alert("An error occurred while posting the data");
+					}
+
+				});
+		}
+
+
+	}
+
+	function SendMessage() {
+		if (selectedChat != null && document.getElementById("textInput").value != "") {
+			var model = {
+
+				Content: document.getElementById("textInput").value,
+				ChatId: selectedChat.Id
+			};
+
+			$.ajax(
+				{
+					type: "POST", //HTTP POST Method
+					url: '@Url.Action("SendMessage")', // Controller/View
+					data: JSON.stringify(model),
+					contentType: "application/json",
+					success: function () {
+						console.log(JSON.stringify(model));
+						connection.invoke("SendMessage", selectedChat.Id).catch(function (err) {
+							return console.error(err.toString());
+						});
+						LoadChats()
+					},
+					error: function () {
+						alert("An error occurred while posting the data");
+					}
+
+				});
+			document.getElementById("textInput").value = "";
+			//$("messageBox").last()[0].scrollIntoView({ behavior: 'smooth' });
+
+		}
+
+
+	}
+
+
+
+
+	function ShowChats(chats) {
+
+		var contactsUl = document.getElementById("contacts");
+		contactsUl.innerHTML = "";
+		console.log(chats.length);
+		for (i = 0; i < chats.length; i++) {
+
+			var li = document.createElement("li");
+			li.appendChild(document.createTextNode(chats[i].Title));
+			li.classList.add("list-group-item");
+			li.onclick = (function (chat) {
+				return function () {
+					console.log(chat);
+					selectedChat = chat;
+					selectedChatId = chat.Id;
+
+
+					ShowMessages(chat.Messages);
+				};
+			})(chats[i]);
+			contactsUl.appendChild(li);
+		}
+
+
+	}
+
+
+
+	function LoadChats() {
+		$.ajax({
+			type: "GET",
+			url: '@Url.Action("GetChats")',
+			contentType: "application/json",
+			dataType: "json",
+			success: function (data) {
+				console.log("Success?");
+				console.log(JSON.parse(data));
+				if (selectedChatId != null) {
+					selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
+					console.log("It is " + selectedChat)
+					ShowMessages(selectedChat.Messages)
+				}
+				if (initConnection) {
+					JSON.parse(data).forEach(group => {
+						connection.invoke("JoinGroup", group.Id);
+					});
+					initConnection = false;
+				}
+
+
+				ShowChats(JSON.parse(data));
+			},
+			error: function () {
+				console.log("Error getting chats")
+			}
+
+		});
+	}
+
+
+
+	function ShowMessages(messages) {
+		chatDiv.style.display = "block";
+		var hint = document.getElementById("hintH");
+		hint.style.display = "none";
+		var messageBox = document.getElementById("messageBox");
+		messageBox.innerHTML = "";
+		console.log(messages);
+		messages.sort(function (b, a) {
+			// Turn your strings into dates, and then subtract them
+			// to get a value that is either negative, positive, or zero.
+			return new Date(b.Date) - new Date(a.Date);
+		});
+
+		for (i = 0; i < messages.length; i++) {
+			console.log(messages[i]);
+
+			if (messages[i].user.Id == loggedUser) {
+				var li = document.createElement('li');
+				li.setAttribute('class', 'list-group-item');
+				messageBox.appendChild(li);
+
+				li.style = "margin: 0 10px 0 10px;";
+				li.innerHTML = li.innerHTML + "You" + ": " + messages[i].Content
+
+			}
+			else {
+				var li = document.createElement('li');
+				li.setAttribute('class', 'list-group-item');
+				messageBox.appendChild(li);
+
+				li.style = "margin: 0 10px 0 10px;";
+				li.innerHTML = li.innerHTML + messages[i].user.FirstName + ": " + messages[i].Content
+
+			}
+
+
+
+		}
+		messageBox.scrollTop = messageBox.scrollHeight - messageBox.clientHeight;
+		ShowChat(selectedChat.Title);
+	}
+
+
+
+</script>
+
+
+
