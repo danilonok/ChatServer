@@ -78,7 +78,9 @@
 
 
 
-				<ul class="list-group" style="height: 200px; overflow: auto" id="messageBox"></ul>
+				<div class="" id="messageBox" style="overflow-y: scroll; height:400px;"></div>
+
+
 				<form onsubmit="return false;">
 
 
@@ -87,7 +89,8 @@
 
 
 					<div class="input-group mb-3">
-						<input class="form-control" id="textInput" />
+						<textarea class="form-control" id="textInput"></textarea>
+
 						<div class="input-group-append">
 							<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
 						</div>
@@ -98,7 +101,7 @@
 
 
 
-					
+
 				</form>
 				<!-- Edit chat modal -->
 				<div class="modal" id="editChatModal">
@@ -151,6 +154,8 @@
 
 
 
+@section scripts {
+	
 
 
 
@@ -193,7 +198,7 @@
 
 	var chatbox = document.getElementById("chatbox");
 	chatbox.style.display = "block";
-	chatbox.onclick = function () { LoadChats() }
+
 	var loggedUser = '@user';
 
 	var userslist = document.getElementById("userslist");
@@ -468,6 +473,7 @@
 
 	function SendMessage() {
 		if (selectedChat != null && document.getElementById("textInput").value != "") {
+			document.getElementById("textInput").style.height = "30px";
 			var model = {
 
 				Content: document.getElementById("textInput").value,
@@ -587,24 +593,33 @@
 		});
 
 		for (i = 0; i < messages.length; i++) {
-
+			var date = new Date(Date.parse(messages[i].Date))
+			var dateStr = date.getDay().toString() + ". " + date.getMonth().toString() + ". " + date.getFullYear().toString() + " | " + date.getHours().toString() + ":" + date.getMinutes().toString();
 
 			if (messages[i].user.Id == loggedUser) {
-				var li = document.createElement('li');
-				li.setAttribute('class', 'list-group-item');
-				messageBox.appendChild(li);
+				var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${messages[i].Content}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
 
-				li.style = "margin: 0 10px 0 10px;";
-				li.innerHTML = li.innerHTML + "You" + ": " + messages[i].Content
+				messageBox.innerHTML = messageBox.innerHTML + htmlText;
+
+				//var li = document.createElement('li');
+				//li.setAttribute('class', 'list-group-item overflow-visible');
+
+				//messageBox.appendChild(li);
+
+				//li.style = "margin: 0 10px 0 10px;";
+				//li.innerHTML = li.innerHTML + "You" + ": " + messages[i].Content
 
 			}
 			else {
-				var li = document.createElement('li');
-				li.setAttribute('class', 'list-group-item');
-				messageBox.appendChild(li);
+				var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${messages[i].Content}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
 
-				li.style = "margin: 0 10px 0 10px;";
-				li.innerHTML = li.innerHTML + messages[i].user.FirstName + ": " + messages[i].Content
+				messageBox.innerHTML = messageBox.innerHTML + htmlText;
+				//var li = document.createElement('li');
+				//li.setAttribute('class', 'list-group-item overflow-visible');
+				//messageBox.appendChild(li);
+
+				//li.style = "margin: 0 10px 0 10px;";
+				//li.innerHTML = li.innerHTML + messages[i].user.FirstName + ": " + messages[i].Content
 
 			}
 
@@ -620,5 +635,5 @@
 </script>
 <script src="~/js/EditChat.js"></script>
 <script src="~/js/site.js"></script>
-
+}
 
