@@ -12,4 +12,4 @@ To add a realtime functionality was used SignalR library.
 - HTML and JS injection protection
 
 ## Demo
-![image](https://github.com/danilonok/ChatServer/assets/80970960/47358e6a-b890-4c8b-b644-ae341494ab7f))
+![image](https://github.com/danilonok/ChatServer/assets/80970960/47358e6a-b890-4c8b-b644-ae341494ab7f)
