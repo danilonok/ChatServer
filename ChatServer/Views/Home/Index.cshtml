@@ -5,7 +5,7 @@
 <script src="https://unpkg.com/@@aspnet/signalr@@1.0.0-rc1-final/dist/browser/signalr.js"></script>
 <div class="row">
 	<div class="col-sm-4 bg-light border">
-		<h1 class="h1 text-center">Chats</h1>
+		<h2 class="h2 ">Chats</h2>
 		<ul id="contacts" class="list-group mb-2">
 		</ul>
 		<div class="text-center"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
@@ -426,15 +426,29 @@
 			contactsUl.innerHTML = "";
 
 			for (i = 0; i < chats.length; i++) {
-
+				console.log("hey " +chats[i].ChatUsers.length);
 				var li = document.createElement("li");
-				li.appendChild(document.createTextNode(chats[i].Title));
+				if(chats[i].ChatUsers.length === 2){
+					
+					li.appendChild(document.createTextNode(chats[i].ChatUsers.find(x=> x.Id != loggedUser).FirstName));
+				}
+				else{
+					li.appendChild(document.createTextNode(chats[i].Title));
+				}
+				
 				li.classList.add("list-group-item");
 				li.onclick = (function (chat) {
 					return function () {
 						selectedChat = chat;
 						selectedChatId = chat.Id;
 						ShowMessages(chat.Messages);
+						if (chat.ChatUsers.length === 2) {
+							ShowChat(chat.ChatUsers.find(x=> x.Id != loggedUser).FirstName);
+						}
+						else{
+							ShowChat(chat.Title)
+						}
+
 					};
 				})(chats[i]);
 				contactsUl.appendChild(li);
@@ -519,7 +533,7 @@
 
 			}
 			messageBox.scrollTop = messageBox.scrollHeight - messageBox.clientHeight;
-			ShowChat(selectedChat.Title);
+			
 		}
 
 
