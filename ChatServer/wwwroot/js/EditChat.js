@@ -39,7 +39,7 @@ addUserToSelectedChatBtn.onclick = function () {
 	if (addUserToSelectedChatInput.value != "") {
 		//get user
 		GetUserSelectedChat(addUserToSelectedChatInput.value)
-		//usersDiv.style.display = "block";
+		
 	}
 }
 
@@ -72,13 +72,15 @@ function AddToSelectedChat(user) {
 saveChangesBtn.onclick = function () {
 	if (users != []) {
 		EditChat(users, chatEditNameInput.value);
-		users = []
-    }
+		
+	}
+	users = []
 }
 deleteChatBtn.onclick = function () {
 	DeleteChat();
 	selectedChat = null;
 	selectedChatId = null;
+	users = []
 	chatDiv.style.display = "none";
 	var hint = document.getElementById("hintH");
 	hint.style.display = "block";

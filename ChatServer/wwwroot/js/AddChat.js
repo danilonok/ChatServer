@@ -19,6 +19,8 @@ addChatBtn.onclick = function () {
 	if (users.length != 0) {
 		AddChat(users, nameInput.value);
 		users = [];
+		nameInput.value = ""
+		emailInput.value = ""
 		userslist.innerHTML = "";
 	}
 }

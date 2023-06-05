@@ -8,7 +8,7 @@
 		<h2 class="h2 ">Chats</h2>
 		<ul id="contacts" class="list-group mb-2">
 		</ul>
-		<div class="text-center"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
+		<div class="text-center"><button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
 
 	</div>
 
@@ -171,7 +171,6 @@
 		});
 		// Start polling for a signals
 		connection.on("ReceiveMessage", function () {
-			console.log("New Message!");
 			LoadChats();
 		});
 
@@ -217,7 +216,6 @@
 				dataType: "json",
 				success: function (responce) {
 					var user = JSON.parse(responce);
-					console.log("User exists");
 
 					AddToList(user);
 
@@ -270,6 +268,9 @@
 		// AJAX Query to add new chat
 		function AddChat(users, Name) {
 			var id = uuidv4();
+			if(Name === ""){
+				Name = "New chat";
+			}
 			console.log("Id - " + id);
 			var model = {
 				Id: id,
@@ -426,7 +427,6 @@
 			contactsUl.innerHTML = "";
 
 			for (i = 0; i < chats.length; i++) {
-				console.log("hey " +chats[i].ChatUsers.length);
 				var li = document.createElement("li");
 				if(chats[i].ChatUsers.length === 2){
 					
@@ -464,8 +464,6 @@
 				contentType: "application/json",
 				dataType: "json",
 				success: function (data) {
-					console.log("Updating Chats");
-					console.log(JSON.parse(data).length);
 					if (selectedChatId != null && JSON.parse(data).find(x => x.Id === selectedChatId)) {
 						selectedChat = JSON.parse(data).find(x => x.Id === selectedChatId);
 
