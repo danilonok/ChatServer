@@ -13,6 +13,7 @@ addUserButton.onclick = function () {
 		//get user
 		GetUser(emailInput.value)
 		usersDiv.style.display = "block";
+		emailInput.value = "";
 	}
 }
 addChatBtn.onclick = function () {

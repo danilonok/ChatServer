@@ -160,22 +160,7 @@ namespace ChatServer.Controllers
         {
             return View();
         }
-        //[HttpPost]
-        //public IActionResult Send(Message message)
-        //{
-
-        //    var email = User.FindFirstValue(ClaimTypes.Email);
-        //    message.SenderEmail = email;
-        //    message.Time = DateTime.Now;
-        //    message.Id = Guid.NewGuid().ToString("N");
-
-        //        _context.Messages.Add(message);
-        //        _context.SaveChanges();
-        //        Console.WriteLine(message.Id.ToString());
-        //        return Redirect("/");
-
-        //   return View("Index");
-        //}
+        
         public record DataJ(string Content, string ChatId);
         [HttpPost]
        
