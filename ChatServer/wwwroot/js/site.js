@@ -2,7 +2,9 @@
 
 // Print the UUID
 
-
+function truncate(str, n) {
+    return (str.length > n) ? str.slice(0, n - 1) + '&hellip;' : str;
+};
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
         .replace(/[xy]/g, function (c) {
@@ -15,7 +17,7 @@ function uuidv4() {
 $(document).ready(function () {
     
     $("textarea").each(function () {
-        this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden;");
+        this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden; resize: none;");
     }).on("input", function () {
         this.style.height = 0;
         this.style.height = (this.scrollHeight) + "px";
@@ -27,5 +29,6 @@ $(document).ready(function () {
             e.preventDefault();
         }
     });
+
 
 });

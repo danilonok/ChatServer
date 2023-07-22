@@ -16,4 +16,18 @@ html {
 body {
   margin-bottom: 60px;
 }
-
+#openEditButton:hover {
+    width: 38px;
+    margin-left: 25px;
+    content: url("../img/settings_hover.png");
+}
+.yourMessage {
+    margin: 0 25px 0 25px;
+    background-color: #D9E8FF;
+    color: #434343;
+    font-weight: 500;
+}
+.message {
+    margin: 0 25px 0 25px;
+    font-weight: 500;
+}

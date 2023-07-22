@@ -53,6 +53,8 @@ namespace ChatServer.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
+            [Display(Name = "Username")]
+            public string UserName { get; set; }
             [Display(Name = "Firstname")]
             public string FirstName { get; set; }
             [Display(Name = "Lastname")]
@@ -73,6 +75,7 @@ namespace ChatServer.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
+                UserName = userName,
                 PhoneNumber = phoneNumber,
                 FirstName = firstName,
                 LastName = lastName
@@ -116,9 +119,15 @@ namespace ChatServer.Areas.Identity.Pages.Account.Manage
                     return RedirectToPage();
                 }
             }
-
+            var userName = user.UserName;
             var firstName = user.FirstName;
             var lastName = user.LastName;
+            if (Input.UserName != userName)
+            {
+                await _userManager.SetUserNameAsync(user, Input.UserName);
+                await _userManager.UpdateAsync(user);
+            }
+
             if (Input.FirstName != firstName)
             {
                 user.FirstName = Input.FirstName;

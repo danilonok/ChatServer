@@ -5,10 +5,13 @@
 <script src="https://unpkg.com/@@aspnet/signalr@@1.0.0-rc1-final/dist/browser/signalr.js"></script>
 <div class="row">
 	<div class="col-sm-4 bg-light border">
-		<h2 class="h2 ">Chats</h2>
+		<nav class="navbar navbar-inverse">
+		<h2 class="h2 d-inline-block">Chats</h2>
+		<div class="text-center d-inline-block"><a class=" " data-bs-toggle="modal" data-bs-target="#myModal"><img style="width:28px;" src="~/img/button.png"/></a></div>
+		</nav>
 		<ul id="contacts" class="list-group mb-2">
 		</ul>
-		<div class="text-center"><button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#myModal">Create new chat</button></div>
+		
 
 	</div>
 
@@ -27,7 +30,7 @@
 
 				<!-- Modal body -->
 				<div class="modal-body">
-					<label for="receiverInput" class="form-label">Enter E-Mail of a user:</label>
+					<label for="receiverInput" class="form-label">Enter E-Mail or Username of a user:</label>
 					<input class="form-control form-control-lg mb-2" id="receiverInput" name="receiverEmail" />
 					<div class="text-center mb-2"><button class="btn btn-primary" id="addUserButton">Add user</button></div>
 					<div id="usersDiv" class="bg-light text-center mb-1">
@@ -70,7 +73,7 @@
 						<h3 class="" id="chatheader" class="text-center h3">Send a message</h3>
 					</div>
 
-					<button class="btn btn-outline-primary navbar-btn" id="openEditButton" data-bs-toggle="modal" data-bs-target="#editChatModal"><img class="" src="~/img/settings.svg" style="width: 30px" /></button>
+					<a class="" id="openEditButton" data-bs-toggle="modal" data-bs-target="#editChatModal"><img class="" src="~/img/settings.png" style="width: 38px; margin-left:25px;" /></a>
 				</div>
 			</nav>
 
@@ -78,7 +81,7 @@
 
 
 
-				<div class="" id="messageBox" style="overflow-y: scroll; height:400px;"></div>
+				<div class="" id="messageBox" style="overflow-y: auto; height:400px;"></div>
 
 
 				<form onsubmit="return false;">
@@ -88,11 +91,11 @@
 
 
 
-					<div class="input-group mb-3">
-						<textarea autofocus placeholder="Type your message..." class="form-control" id="textInput"></textarea>
+					<div class="input-group mb-3" style="margin-left: 25px;">
+						<textarea autofocus placeholder="Type your message..." class="form-control" id="textInput" style=""></textarea>
 
 						<div class="input-group-append">
-							<input id="sendButton" class="btn btn-primary " type="button" onclick="SendMessage()" value="Send" />
+							<input id="sendButton" class="btn btn-primary " type="button" style="margin-right:50px;" onclick="SendMessage()" value="Send" />
 						</div>
 					</div>
 
@@ -212,11 +215,10 @@
 				type: "GET",
 				url: '@Url.Action("GetUser")',
 				contentType: "application/json",
-				data: { email: userEmail },
+				data: { userInfo: userEmail },
 				dataType: "json",
 				success: function (responce) {
 					var user = JSON.parse(responce);
-
 					AddToList(user);
 
 				},
@@ -422,21 +424,40 @@
 
 		// Add chat UI elements from the query
 		function ShowChats(chats) {
-
+			console.log(chats);
 			var contactsUl = document.getElementById("contacts");
 			contactsUl.innerHTML = "";
 
 			for (i = 0; i < chats.length; i++) {
 				var li = document.createElement("li");
-				if(chats[i].ChatUsers.length === 2){
-					
-					li.appendChild(document.createTextNode(chats[i].ChatUsers.find(x=> x.Id != loggedUser).FirstName));
-				}
-				else{
-					li.appendChild(document.createTextNode(chats[i].Title));
+				var chatName = document.createElement("p");
+				var lastMessage = document.createElement("p");
+				if(chats[i].Messages.length > 0){
+					lastMessage.innerHTML = chats[i].Messages.sort(function (b, a) {
+					return new Date(b.Date) - new Date(a.Date);
+				})[chats[i].Messages.length - 1].Content;
 				}
 				
+				if(chats[i].ChatUsers.length === 2){
+					chatName.innerHTML = chats[i].ChatUsers.find(x=> x.Id != loggedUser).FirstName;
+					li.appendChild(chatName);
+				}
+				else{
+					chatName.innerHTML = chats[i].Title;
+					li.appendChild(chatName);
+				}
+				chatName.style.marginBottom = "0px";
+				lastMessage.style.marginBottom = "0px";
+				lastMessage.style.color = "#828282";
+				lastMessage.style.overflow = "hidden";
+				lastMessage.style.whiteSpace = "nowrap";
+				lastMessage.style.textOverflow = "ellipsis";
+				chatName.style.fontWeight = "bold";
+				lastMessage.style.fontWeight = "light";
 				li.classList.add("list-group-item");
+				li.style.paddingBottom = "4px";
+				li.style.paddingTop = "4px";
+				li.appendChild(lastMessage);
 				li.onclick = (function (chat) {
 					return function () {
 						selectedChat = chat;
@@ -516,13 +537,13 @@
 				var dateStr = date.getDay().toString() + ". " + date.getMonth().toString() + ". " + date.getFullYear().toString() + " | " + date.getHours().toString() + ":" + date.getMinutes().toString();
 				dateStr = date.toLocaleDateString("en-US", options) + " | " + ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2);;
 				if (messages[i].user.Id == loggedUser) {
-					var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1 text-white rounded-3 bg-primary" style="margin:0 25px 0 25px">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
+					var htmlText = ` <div style="word-wrap: break-word;"> <p class="p-2 me-3 mb-1 yourMessage rounded-3 " style="">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${"You"}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
 					
 					messageBox.innerHTML = messageBox.innerHTML + htmlText;
 
 				}
 				else {
-					var htmlText = ` <div style="word-wrap: break-word;"> <p class=" p-2 me-3 mb-1  rounded-3 bg-white" style="margin:0 25px 0 25px">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
+					var htmlText = ` <div style="word-wrap: break-word;"> <p class="message p-2 me-3 mb-1  rounded-3 bg-white" style="">${message}<p class="small d-inline  mb-3 rounded-3 text-muted float-left" style="margin-left:30px;">${messages[i].user.FirstName}</p><p class="small d-inline  mb-3 rounded-3 text-muted float-end" style="margin-right:25px;">${dateStr}</p></div> `
 					messageBox.innerHTML = messageBox.innerHTML + htmlText;
 
 				}

@@ -79,6 +79,10 @@ namespace ChatServer.Areas.Identity.Pages.Account
             [Display(Name = "Lastname")]
             public string LastName { get; set; }
             [Required]
+            [StringLength(100, ErrorMessage = "The username must be maximum {1} characters long.")]
+            [Display(Name = "Username")]
+            public string UserName { get; set; }
+            [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
@@ -121,8 +125,9 @@ namespace ChatServer.Areas.Identity.Pages.Account
                 user.FirstName = Input.FirstName;
 
                 user.LastName = Input.LastName;
+                //user.UserName = Input.UserName;
 
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
 

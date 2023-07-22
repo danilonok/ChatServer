@@ -26,8 +26,8 @@ namespace ChatServer.Controllers
         [Authorize]
         public IActionResult Index()
         {
-            
-            ViewData["User"] = _userContext.Users.Where( X => X.Email == User.FindFirstValue(ClaimTypes.Email)).First().Id;
+
+            ViewData["User"] = _userContext.Users.Where(X => X.Email == User.FindFirstValue(ClaimTypes.Email)).First().Id;
             return View();
         }
         [HttpGet]
@@ -36,7 +36,7 @@ namespace ChatServer.Controllers
             var loggedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var chats = _userContext.Chat
                 .Include(c => c.ChatUsers)
-                .Include(c=>c.Messages)
+                .Include(c => c.Messages)
                 .ToList();
 
             var UserChats = chats.FindAll(item => item.ChatUsers.Contains(_userContext.Users.ToList<ApplicationUser>().Find(item => item.Id == loggedUserId)));
@@ -49,9 +49,9 @@ namespace ChatServer.Controllers
 
 
         [HttpGet]
-        public JsonResult GetUser(string email)
+        public JsonResult GetUser(string userInfo)
         {
-            var user = _userContext.Users.ToList().Find(x => x.Email == email);
+            var user = _userContext.Users.ToList().Find(x => x.Email == userInfo || x.UserName == userInfo);
             string json = JsonConvert.SerializeObject(user, Formatting.Indented, new JsonSerializerSettings
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
@@ -84,7 +84,7 @@ namespace ChatServer.Controllers
 
                 Chat newChat = new Chat();
                 
-                newChat.ChatUsers = new List<ApplicationUser>();
+               
 
 
                 foreach (var user in data.users)
